@@ -9,7 +9,7 @@
 ##### `pip3 install -r requirements.txt`
 
 #### Запуск
-#####`python3 echo_dump.onion.py -h`
+##### `python3 echo_dump.onion.py -h`
 
 -----------
 
