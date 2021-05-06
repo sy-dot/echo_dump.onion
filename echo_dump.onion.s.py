@@ -27,15 +27,12 @@ class Colors:
 class Configuration:
     ECHODUMP_ERROR_CODE_STANDARD = -1
     ECHODUMP_SUCCESS_CODE_STANDARD = 0
-
     ECHODUMP_MIN_DATA_RETRIEVE_LENGTH = 1
     ECHODUMP_RUNNING = False
     ECHODUMP_OS_UNIX_LINUX = False
     ECHODUMP_OS_WIN32_64 = False
     ECHODUMP_OS_DARWIN = False
-
     ECHODUMP_REQUESTS_SUCCESS_CODE = 200
-
     __ECHODUMP_api__ = "https://darksearch.io/api/search"
 
 
@@ -46,20 +43,15 @@ class Platform(object):
     def get_operating_system_descriptor(self):
         cfg = Configuration()
         clr = Colors()
-
         if self.execpltf:
             if sys.platform == "linux" or sys.platform == "linux2":
                 cfg.ECHODUMP_OS_UNIX_LINUX = True
-                print(clr.BOLD + clr.W + "OS: " +
-                      clr.G + sys.platform + clr.END)
             if sys.platform == "win64" or sys.platform == "win32":
                 cfg.ECHODUMP_OS_WIN32_64 = True
-                print(clr.BOLD + clr.W + "OS: " +
-                      clr.G + sys.platform + clr.END)
             if sys.platform == "darwin":
                 cfg.ECHODUMP_OS_DARWIN = True
-                print(clr.BOLD + clr.W + "OS: " +
-                      clr.G + sys.platform + clr.END)
+            print(f'OS: {clr.G}{sys.platform}{clr.W}')
+
         else:
             pass
 
@@ -73,6 +65,10 @@ class Platform(object):
             pass
 
 
+f = open('saved.txt', 'w')
+f.close()
+
+
 class ECHODUMP(object):
     def __init__(self, api, query):
         self.api = api
@@ -82,23 +78,33 @@ class ECHODUMP(object):
         hdrs = Headers()
         clr = Colors()
         cfg = Configuration()
-
         try:
             darksearch_url_response = requests.get(self.api, params=self.query)
             json_data = darksearch_url_response.json()
             #json_dump = json.dumps(json_data, indent=2)
             darksearch_url_response.headers["User-Agent"] = random.choice(
                 hdrs.useragent)
-        except requests.RequestException as re:
-            print(clr.BOLD + clr.R + str(re) + clr.END)
-
+        except requests.RequestException as e:
+            print(f'{clr.R}{str(e)}{clr.W}')
         try:
             if json_data["total"] >= cfg.ECHODUMP_MIN_DATA_RETRIEVE_LENGTH:  # data >= 1
                 for key in range(0, 18):
                     site_title = json_data['data'][key]['title']
                     site_onion_link = json_data['data'][key]['link']
-                    print(
-                        clr.BOLD + clr.G + f"[+] Тайтл: {site_title}\n>>> Onion Link: {clr.R}{site_onion_link}\n" + clr.END)
+                    with open('saved.txt', 'r') as f:
+                        if not site_title in f.read():
+                            print(
+                                clr.BOLD + clr.G + f"[+] Тайтл: {site_title}\n>>> Onion Link: {clr.R}{site_onion_link}\n" + clr.END)
+
+                            try:
+                                with open('saved.txt', 'a') as f:
+                                    f.write(
+                                        f'Site: {site_title}\nOnion-link: {site_onion_link}\n')
+                            except Exception as e:
+                                print(f'{clR.g}{str(e)}{clr.W}')
+
+                print(
+                    f'\n[{clr.G}?{clr.W}] Результаты сохранены в {clr.G}saved.txt{clr.W}.')
         except IndexError:
             print(clr.BOLD + clr.R +
                   f"[{clr.R}-{clr.W}] Результаты по запросу не найдены: {self.query}\n" + clr.END)
@@ -108,7 +114,6 @@ def ECHODUMP_main():
     cfg = Configuration()
     clr = Colors()
     bn = Banner()
-
     Platform(True).clean_screen()
     Platform(True).get_operating_system_descriptor()
     bn.LoadECHODUMPBanner()
@@ -122,11 +127,9 @@ def ECHODUMP_main():
                         required=True)
     parser.add_argument("-p",
                         "--page",
-                        help="номер страницы для фильтрации результатов, возвращаемых из поиска (по умолчанию=1).",
+                        help="номер страницы для фильтрации результатов, возвращаемых из поиска (дефолт).",
                         type=int)
-
     args = parser.parse_args()
-
     if args.query:
         if args.page:
             query = {
@@ -150,3 +153,4 @@ def ECHODUMP_main():
 
 if __name__ == "__main__":
     ECHODUMP_main()
+    f.close()
